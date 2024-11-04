@@ -145,7 +145,7 @@ def cli():
     "attachments",
     "-a",
     "--attachment",
-    type=AttachmentType(),
+    type=str,
     multiple=True,
     help="Attachment path or URL or -",
 )
@@ -1526,7 +1526,15 @@ def embed_multi(
     type=click.Path(file_okay=True, allow_dash=False, dir_okay=False, writable=True),
     envvar="LLM_EMBEDDINGS_DB",
 )
-def similar(collection, id, input, content, binary, number, database):
+@click.option("-t", "--template", help="Template to use")
+@click.option(
+    "-p",
+    "--param",
+    multiple=True,
+    type=(str, str),
+    help="Parameters for template",
+)
+def similar(collection, id, input, content, binary, number, database, template, param):
     """
     Return top N similar IDs from a collection
 
@@ -1540,8 +1548,32 @@ def similar(collection, id, input, content, binary, number, database):
     \b
         llm similar my-collection 1234
     """
-    if not id and not content and not input:
-        raise click.ClickException("Must provide content or an ID for the comparison")
+    if not id and not content and not input and not template:
+        raise click.ClickException("Must provide content or an ID or a template for the comparison")
+
+    prompt = None
+    def read_prompt():
+        nonlocal prompt
+
+        # Is there extra prompt available on stdin?
+        stdin_prompt = None
+        if not sys.stdin.isatty():
+            stdin_prompt = sys.stdin.read()
+
+        if stdin_prompt:
+            bits = [stdin_prompt]
+            if prompt:
+                bits.append(prompt)
+            prompt = " ".join(bits)
+
+        if prompt is None and sys.stdin.isatty():
+            # Hang waiting for input to stdin (unless --save)
+            prompt = sys.stdin.read()
+        return prompt
+
+    sources = sum(bool(x) for x in [id, content, input, template])
+    if sources > 1:
+        raise click.ClickException("Cannot use more than one of ID, --content, --input, --template")
 
     if database:
         db = sqlite_utils.Database(database)
@@ -1562,18 +1594,28 @@ def similar(collection, id, input, content, binary, number, database):
         except Collection.DoesNotExist:
             raise click.ClickException("ID not found in collection")
     else:
-        # Resolve input text
-        if not content:
-            if not input or input == "-":
-                # Read from stdin
-                input_source = sys.stdin.buffer if binary else sys.stdin
-                content = input_source.read()
-            else:
-                mode = "rb" if binary else "r"
-                with open(input, mode) as f:
-                    content = f.read()
-        if not content:
-            raise click.ClickException("No content provided")
+        if template:
+            params = dict(param)
+            template_obj = load_template(template)
+            content = read_prompt()
+            try:
+                content, _ = template_obj.evaluate(content, params)
+            except Template.MissingVariables as ex:
+                raise click.ClickException(str(ex))
+        else:
+            # Resolve input text
+            if not content:
+                if not input or input == "-":
+                    # Read from stdin
+                    input_source = sys.stdin.buffer if binary else sys.stdin
+                    content = input_source.read()
+                else:
+                    mode = "rb" if binary else "r"
+                    with open(input, mode) as f:
+                        content = f.read()
+            if not content:
+                raise click.ClickException("No content provided")
+
         results = collection_obj.similar(content, number)
 
     for result in results:
