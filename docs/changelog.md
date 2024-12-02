@@ -1,5 +1,61 @@
 # Changelog
 
+(v0_19)=
+## 0.19 (2024-12-01)
+
+- Tokens used by a response are now logged to new `input_tokens` and `output_tokens` integer columns and a `token_details` JSON string column, for the default OpenAI models and models from other plugins that {ref}`implement this feature <advanced-model-plugins-usage>`. [#610](https://github.com/simonw/llm/issues/610)
+- `llm prompt` now takes a `-u/--usage` flag to display token usage at the end of the response.
+- `llm logs -u/--usage` shows token usage information for logged responses.
+- `llm prompt ... --async` responses are now logged to the database. [#641](https://github.com/simonw/llm/issues/641)
+- `llm.get_models()` and `llm.get_async_models()` functions, {ref}`documented here <python-api-listing-models>`. [#640](https://github.com/simonw/llm/issues/640)
+- `response.usage()` and async response `await response.usage()` methods, returning a `Usage(input=2, output=1, details=None)` dataclass. [#644](https://github.com/simonw/llm/issues/644)
+- `response.on_done(callback)` and `await response.on_done(callback)` methods for specifying a callback to be executed when a response has completed, {ref}`documented here <python-api-response-on-done>`. [#653](https://github.com/simonw/llm/issues/653)
+- Fix for bug running `llm chat` on Windows 11. Thanks, [Sukhbinder Singh](https://github.com/sukhbinder). [#495](https://github.com/simonw/llm/issues/495)
+
+(v0_19a2)=
+## 0.19a2 (2024-11-20)
+
+- `llm.get_models()` and `llm.get_async_models()` functions, {ref}`documented here <python-api-listing-models>`. [#640](https://github.com/simonw/llm/issues/640)
+
+(v0_19a1)=
+## 0.19a1 (2024-11-19)
+
+- `response.usage()` and async response `await response.usage()` methods, returning a `Usage(input=2, output=1, details=None)` dataclass. [#644](https://github.com/simonw/llm/issues/644)
+
+(v0_19a0)=
+## 0.19a0 (2024-11-19)
+
+- Tokens used by a response are now logged to new `input_tokens` and `output_tokens` integer columns and a `token_details` JSON string column, for the default OpenAI models and models from other plugins that {ref}`implement this feature <advanced-model-plugins-usage>`. [#610](https://github.com/simonw/llm/issues/610)
+- `llm prompt` now takes a `-u/--usage` flag to display token usage at the end of the response.
+- `llm logs -u/--usage` shows token usage information for logged responses.
+- `llm prompt ... --async` responses are now logged to the database. [#641](https://github.com/simonw/llm/issues/641)
+
+(v0_18)=
+## 0.18 (2024-11-17)
+
+- Initial support for async models. Plugins can now provide an `AsyncModel` subclass that can be accessed in the Python API using the new `llm.get_async_model(model_id)` method. See {ref}`async models in the Python API docs<python-api-async>` and {ref}`implementing async models in plugins <advanced-model-plugins-async>`. [#507](https://github.com/simonw/llm/issues/507)
+- OpenAI models all now include async models, so function calls such as `llm.get_async_model("gpt-4o-mini")` will return an async model.
+- `gpt-4o-audio-preview` model can be used to send audio attachments to the GPT-4o audio model. [#608](https://github.com/simonw/llm/issues/608)
+- Attachments can now be sent without requiring a prompt. [#611](https://github.com/simonw/llm/issues/611)
+- `llm models --options` now includes information on whether a model supports attachments. [#612](https://github.com/simonw/llm/issues/612)
+- `llm models --async` shows available async models.
+- Custom OpenAI-compatible models can now be marked as `can_stream: false` in the YAML if they do not support streaming. Thanks, [Chris Mungall](https://github.com/cmungall). [#600](https://github.com/simonw/llm/pull/600)
+- Fixed bug where OpenAI usage data was incorrectly serialized to JSON. [#614](https://github.com/simonw/llm/issues/614)
+- Standardized on `audio/wav` MIME type for audio attachments rather than `audio/wave`. [#603](https://github.com/simonw/llm/issues/603)
+
+(v0_18a1)=
+## 0.18a1 (2024-11-14)
+
+- Fixed bug where conversations did not work for async OpenAI models. [#632](https://github.com/simonw/llm/issues/632)
+- `__repr__` methods for `Response` and `AsyncResponse`.
+
+(v0_18a0)=
+## 0.18a0 (2024-11-13)
+
+Alpha support for **async models**. [#507](https://github.com/simonw/llm/issues/507)
+
+Multiple [smaller changes](https://github.com/simonw/llm/compare/0.17.1...0.18a0).
+
 (v0_17)=
 ## 0.17 (2024-10-29)
 
